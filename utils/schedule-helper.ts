@@ -16,6 +16,12 @@ export interface DynamicCronWindow {
   created_at: string;
 }
 
+interface ScheduleCheckResponse {
+  scheduleCheckingDisabled?: boolean;
+  shouldRun?: boolean;
+  activeWindows?: DynamicCronWindow[];
+}
+
 /**
  * Checks if current time falls within any active window for the specified job type
  */
@@ -44,12 +50,12 @@ export async function shouldRunCronJob(jobType: 'live-update' | 'post-match'): P
       return true; // Default to running the job if we can't check the schedule
     }
 
-    const data = await response.json();
+    const data = await response.json() as ScheduleCheckResponse;
     
     // If schedule checking is disabled or we get an explicit shouldRun response, use that
     if (data.scheduleCheckingDisabled || data.shouldRun !== undefined) {
       console.log(`Schedule check result: ${data.shouldRun ? 'should run' : 'skip'} (schedule checking ${data.scheduleCheckingDisabled ? 'disabled' : 'enabled'})`);
-      return data.scheduleCheckingDisabled ? true : data.shouldRun;
+      return data.scheduleCheckingDisabled ? true : !!data.shouldRun;
     }
     
     // Check if we have any active windows
